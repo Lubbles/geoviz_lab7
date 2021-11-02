@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>"Leaflet Map"</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
+    <style>
+
+ html { height:100%;}
+    body {
+        height:100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    #map {
+        width: 100%;
+        margin: 0 auto;
+        height: 95%;
+    };
+
+    .info{
+        z-index: 1000;
+        position: absolute;
+        right: 40%;
+        top: 5%;
+        padding: 6px 8px;
+        font: 14px Arial, Helvetica, sans-serif;
+        text-align: center;
+        background: white;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+}
+
+    .info h1 {
+        font-size:  16px;
+        margin:  0 0 5px;
+        color:  #777777;
+    }
+    .legend {
+        line-height: 18px;
+        color: #333333;
+        font-family: 'Open Sans', Helvetica, sans-serif;
+        padding: 6px 8px;
+        background: white;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+    }
+.legend i {
+    width: 28px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+
+}
+
+.legend p{
+    font-size: 12px;
+    line-height: 18px;
+    margin: 0;
+
+}
+
+    </style>
+</head>
+<body>
+    <!-- Our web map and content will go here -->
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <div id="map" style="width: 1000px; height: 600px">
+    </div>
+    <script>
+
+
+
+
+        var map = L.map('map', {center: [39.981192, -75.155399], zoom: 11.});
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        map.doubleClickZoom.disable();
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        
+        var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+                'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+            mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+            
+        var grayscale   = L.tileLayer(mbUrl, {id: 'mapbox/light-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr}),
+            streets  = L.tileLayer(mbUrl, {id: 'mapbox/streets-v11', tileSize: 512, zoomOffset: -1, attribution: mbAttr});
+            
+ var baseMaps = {
+    "grayscale": grayscale,
+    "streets": streets
+};
+
+var temple = L.marker([39.981192, -75.155399]);
+var drexel = L.marker([39.957352834066796, -75.18939693143933]);
+var penn = L.marker([39.95285548473699, -75.19309508637147]);
+
+var universities = L.layerGroup([temple, drexel, penn]);
+var universityLayer = {
+    "Philly University": universities
+};
+
+
+
+
+        
+        var popup = L.popup();
+
+        
+        function onMapClick(e) {
+            popup
+                .setLatLng(e.latlng)
+                .setContent("You clicked the map at " + e.latlng.toString())
+                .openOn(map);
+        }
+        
+        map.on('click', onMapClick);
+
+        L.control.scale({position: 'bottomleft'}).addTo(map)
+
+        var legend = L.control({position: 'bottomright'});
+
+        legend.onAdd = function (map) {
+             var div = L.DomUtil.create('div', 'legend');            
+    div.innerHTML += '<b>Individuals with Blood Lead Level 5%+</b><br />';
+    div.innerHTML += 'by census tract<br />';
+    div.innerHTML += '<br>';
+    div.innerHTML += '<i style="background: #D94701"></i><p>36+ people</p>';
+    div.innerHTML += '<i style="background: #FD8D3C"></i><p>18-36 people</p>';
+    div.innerHTML += '<i style="background: #FDBE85"></i><p>1-18 people</p>';
+    div.innerHTML += '<i style="background: #FEEDDE"></i><p>0 people</p>';
+    div.innerHTML += '<hr>';
+    div.innerHTML += '<i style="background: "></i><p>No Data</p>';
+    return div;
+};
+
+legend.addTo(map);
+
+       
+    
+function onEachFeatureFunc(feature, layer){
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomFeature
+    });
+    layer.bindPopup('# with Blood Lead Level over 5%: '+feature.properties.num_bll_5p);
+}
+
+
+function highlightFeature(e){
+    var layer = e.target;
+
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
+};
+
+function resetHighlight(e) {
+    neighborhoodsLayer.resetStyle(e.target);
+}  
+
+function zoomFeature(e){
+    console.log(e.target.getBounds());
+    map.fitBounds(e.target.getBounds().pad(1.5));
+};
+ 
+
+ var neighborhoodsLayer = null;
+$.getJSON("NoNull_lead.geojson", function(data){
+    neighborhoodsLayer = L.geoJson(data, {
+        style: styleFunc,
+        onEachFeature: onEachFeatureFunc
+
+    }).addTo(map);
+
+        var overlayLayer = {
+        "blood_lead_level": neighborhoodsLayer,
+        "Philly University": universities
+    };
+
+ L.control.layers(baseMaps, overlayLayer).addTo(map);
+});
+
+
+
+function styleFunc(feature) {
+    return {
+        fillColor: setColorFunc(feature.properties.num_bll_5p),
+        fillOpacity: 0.9,
+        weight: 1,
+        opacity: 1,
+        color: '#ffffff',
+        dashArray: '3'
+    };
+}
+
+function setColorFunc(density){
+    return density > 36 ? '#D94701' :
+           density > 18 ? '#FD8D3C' :
+           density > 1 ? '#FDBE85' :
+           density >= 0 ? '#FEEDDE' :
+                      '#BFBCBB';
+};
+
+
+
+
+    </script>
+</body>
+</html>
