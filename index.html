@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>"Leaflet Map"</title>
+    <title>Leaflet Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
     <style>
 
@@ -176,7 +176,7 @@ function zoomFeature(e){
  
 
  var neighborhoodsLayer = null;
-$.getJSON("NoNull_lead.geojson", function(data){
+$.getJSON("lead.geojson", function(data){
     neighborhoodsLayer = L.geoJson(data, {
         style: styleFunc,
         onEachFeature: onEachFeatureFunc
@@ -209,7 +209,7 @@ function setColorFunc(density){
            density > 18 ? '#FD8D3C' :
            density > 1 ? '#FDBE85' :
            density >= 0 ? '#FEEDDE' :
-                      '#BFBCBB';
+                  'NaN' >   '#BFBCBB';
 };
 
 
